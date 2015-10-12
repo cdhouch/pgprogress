@@ -1,7 +1,8 @@
 #!/bin/bash
 
-# Enter Database Name to check against
-DBNAME="I2B2"
+# Required - Enter Database Name to check against
+# DBNAME="<DATABASENAME>"
+DBNAME="postgres"
 
 if [ $# -eq 0 ]
   then
