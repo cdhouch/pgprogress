@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Enter Database Name to check against
-DBNAME="I2B2"
+DBNAME="postgres"
 
 if [ $# -eq 0 ]
   then
@@ -18,18 +18,33 @@ MFILE=`grep read proctrace.txt |awk -F',' {'print $1;'}|awk -F"(" {'print $2;'}|
 SMFILE=`echo $MFILE|xargs`
 NUMMFILE=`echo $SMFILE|wc -w`
 
+for RFNAME in $SMFILE
+do
+	FULLNAME=`ls -l /proc/$1/fd |grep " $RFNAME ->"`
+	ISTMP=`echo $FULLNAME|grep -c "pgsql_tmp"`
+	#echo "Is temp? $ISTMP $RFNAME"
+done
+
 WFILES=`grep write proctrace.txt |awk -F',' {'print $1;'}|awk -F"(" {'print $2;'}|sort|uniq|xargs`
 
-if [ $NUMMFILE -gt 1 ]; then
-	echo "Process is reading multiple files and progress cannot be tracked"
+for WFNAME in $WFILES
+do
+        FULLNAME=`ls -l /proc/$1/fd |grep " $WFNAME ->"`
+        ISTMP=`echo $FULLNAME|grep -c "pgsql_tmp"`
+        #echo "Is temp? $ISTMP $WFNAME"
+done
+
+if [ $NUMMFILE -gt 1 ] || [ -z "$MFILE" ] || [ $ISTMP -gt 0 ]; then
+	echo "Process's progress cannot be tracked."
+	echo "Either it is reading multiple files, writing only, or working with tmp tables"
 	echo "Files being READ are:"
 	echo "---------------------"
 	for RFILE in $SMFILE
 	do
 		ONFILE=`ls -l /proc/$1/fd |grep " $RFILE ->"|awk -F"-> " {'print $2;'}|awk -F"/" {'print $6;'}|awk -F"." {'print $1;'}`
 		ONSUBFILE=`ls -l /proc/$1/fd |grep " $RFILE ->"|awk -F . '{print $NF}'`
-		OIDNAME=`psql -t -d $DBNAME -c "SELECT relname from pg_class where oid = $ONFILE;"`
-		echo "Process is reading $OIDNAME at $ONSUBFILE"
+		FULLNAME=`ls -l /proc/$1/fd |grep " $RFILE ->"|awk -F"-> " {'print $2;'}`
+		echo "Process is reading $FULLNAME"
 	done
         
 	echo
@@ -40,8 +55,8 @@ if [ $NUMMFILE -gt 1 ]; then
 	do
 		ONFILE=`ls -l /proc/$1/fd |grep " $WFILE ->"|awk -F"-> " {'print $2;'}|awk -F"/" {'print $6;'}|awk -F"." {'print $1;'}`
                 ONSUBFILE=`ls -l /proc/$1/fd |grep " $WFILE ->"|awk -F . '{print $NF}'`
-                OIDNAME=`psql -t -d $DBNAME -c "SELECT relname from pg_class where oid = $ONFILE;"`
-                echo "Process is writing $OIDNAME at $ONSUBFILE"
+                FULLNAME=`ls -l /proc/$1/fd |grep " $WFILE ->"|awk -F"-> " {'print $2;'}`
+		echo "Process is writing $FULLNAME"
 	done
 	echo
 else
