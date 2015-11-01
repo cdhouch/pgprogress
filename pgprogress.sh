@@ -77,7 +77,7 @@ else
 
 	MAXSUBFILE=`ls -al $MDIR |grep $ONFILE|sort|grep -v "_vm"|grep -v "_fsm"|tail -n1|awk -F . '{print $NF}'`
 
-	OIDNAME=`psql -t -d $DBNAME -c "SELECT relname from pg_class where oid = $ONFILE;"`
+	OIDNAME=`psql -t -d $DBNAME -c "SELECT relname from pg_class where relfilenode = $ONFILE;"`
 	echo "Process is reading $OIDNAME at $ONSUBFILE gigabytes of $MAXSUBFILE"
 	echo
 
