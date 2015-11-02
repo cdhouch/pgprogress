@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Enter Database Name to check against
-DBNAME="I2B2"
+DBNAME="postgres"
 MPPID=$1
 
 # Error check input
