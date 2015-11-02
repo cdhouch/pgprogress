@@ -59,7 +59,7 @@ function printlists {
                 ONSUBFILE=`ls -l /proc/$MPPID/fd |grep " $IOFILE ->"|awk -F . '{print $NF}'`
                 FULLNAME=`ls -l /proc/$MPPID/fd |grep " $IOFILE ->"|awk -F"-> " {'print $2;'}`
                 MDIR=`ls -l /proc/$MPPID/fd |grep " $IOFILE ->"|awk -F"-> " {'print $2;'}|awk -F"/" {'print $1"/"$2"/"$3"/"$4"/"$5;'}`
-		MAXSUBFILE=`ls -al $MDIR |grep $ONFILE|sort|grep -v "_vm"|grep -v "_fsm"|tail -n1|awk -F . '{print $NF}'`
+		MAXSUBFILE=`ls -alv $MDIR |grep $ONFILE|grep -v "_vm"|grep -v "_fsm"|tail -n1|awk -F . '{print $NF}'`
 		isonlygig 
 		getfname $ONFILE
                 echo "Process I/O is in $OIDNAME at $ONSUBFILE out of $MAXSUBFILE at $FULLNAME"
