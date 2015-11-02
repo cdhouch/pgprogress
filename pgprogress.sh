@@ -62,7 +62,7 @@ function printlists {
 		MAXSUBFILE=`ls -al $MDIR |grep $ONFILE|sort|grep -v "_vm"|grep -v "_fsm"|tail -n1|awk -F . '{print $NF}'`
 		isonlygig 
 		getfname $ONFILE
-                echo "Process is reading from $OIDNAME at $ONSUBFILE out of $MAXSUBFILE at $FULLNAME"
+                echo "Process I/O is in $OIDNAME at $ONSUBFILE out of $MAXSUBFILE at $FULLNAME"
 	done
 }
 
