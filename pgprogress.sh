@@ -1,7 +1,5 @@
 #!/bin/bash
 
-# Enter Database Name to check against
-DBNAME="postgres"
 MPPID=$1
 
 # Error check input
@@ -10,6 +8,10 @@ if [ $# -eq 0 ]
     echo "No PID supplied"
     exit
 fi
+
+# Determine the database being used by the process we're interrested in 
+DBNAME=`psql -Atc "select datname from pg_stat_activity where pid = $MPPID"`
+QUERY=`psql -Atc "select query from pg_stat_activity where pid = $MPPID"`
 
 #functions
 
@@ -29,7 +31,7 @@ function getfname {
 #Build read or write lists and flag if temp file is in list
 function buildlists {
 	local FTYPE=$1
-	MFILE=`grep $FTYPE proctrace.txt |awk -F',' {'print $1;'}|awk -F"(" {'print $2;'}|sort|uniq|xargs`
+	MFILE=`grep $FTYPE /tmp/proctrace.txt |awk -F',' {'print $1;'}|awk -F"(" {'print $2;'}|sort|uniq|xargs`
 	NUMMFILE=`echo $MFILE|wc -w`
 	
 	for IOFNAME in $MFILE
@@ -55,10 +57,10 @@ function printlists {
 	#echo "DEBUG IOFILES $IOFILES RFIES $RFILES WFILES $WFILES"
 	for IOFILE in $IOFILES
 	do
-		ONFILE=`ls -l /proc/$MPPID/fd |grep " $IOFILE ->"|awk -F"-> " {'print $2;'}|awk -F"/" {'print $6;'}|awk -F"." {'print $1;'}`
+		ONFILE=`ls -l /proc/$MPPID/fd |grep " $IOFILE ->" | grep -oP '(?<=/)\d+(?=\.\d+$)'`
                 ONSUBFILE=`ls -l /proc/$MPPID/fd |grep " $IOFILE ->"|awk -F . '{print $NF}'`
                 FULLNAME=`ls -l /proc/$MPPID/fd |grep " $IOFILE ->"|awk -F"-> " {'print $2;'}`
-                MDIR=`ls -l /proc/$MPPID/fd |grep " $IOFILE ->"|awk -F"-> " {'print $2;'}|awk -F"/" {'print $1"/"$2"/"$3"/"$4"/"$5;'}`
+                MDIR=`ls -l /proc/$MPPID/fd |grep " $IOFILE ->" | grep -oP '(?<=\s)/.*(?=/[^/]+$)'`
 		MAXSUBFILE=`ls -alv $MDIR |grep $ONFILE|grep -v "_vm"|grep -v "_fsm"|tail -n1|awk -F . '{print $NF}'`
 		isonlygig 
 		getfname $ONFILE
@@ -77,11 +79,11 @@ function isonlygig {
 
 
 #Main
-echo "Checking process $MPPID"
+echo "Checking process $MPPID ($QUERY)"
 echo $(date)
 echo
 
-timeout 1 strace -o proctrace.txt -p $MPPID &>/dev/null
+timeout 2 strace -o /tmp/proctrace.txt -p $MPPID &>/dev/null
 buildlists read
 buildlists write
 
